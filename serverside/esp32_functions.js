@@ -229,7 +229,6 @@ let f_s_ino__from_o_config = function(o_config){
 #include <Preferences.h>
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
-#include <Stepper.h>
 
 // ── Flash-time defaults (overridden by NVS if saved values exist) ──
 const char* S_WIFI_SSID_DEFAULT = "${o_config.s_wifi_ssid}";
@@ -253,10 +252,68 @@ int n_deg_final;
 bool b_dir_final_forward;
 float n_rpm;
 
-// 28BYJ-48: 2048 steps per revolution (half-step mode with ULN2003)
-const int N_STEP_PER_REV = 2048;
-// Pin order for 28BYJ-48 with ULN2003: IN1, IN3, IN2, IN4 (swap middle two)
-Stepper o_stepper(N_STEP_PER_REV, N_PIN_IN1, N_PIN_IN3, N_PIN_IN2, N_PIN_IN4);
+// ── 28BYJ-48 half-step driver (no library) ──
+// 28BYJ-48 with ULN2003 in half-step mode: 4096 half-steps per revolution
+// gear ratio 63.68395:1, 64 half-steps per motor revolution, 64 * 63.68395 ≈ 4076
+// commonly rounded to 4096 for simplicity
+const int N_HALFSTEP_PER_REV = 4096;
+
+// half-step sequence: 8 phases
+// each phase sets IN1-IN4 high/low
+const int A_N_HALFSTEP[8][4] = {
+    {1, 0, 0, 0},  // phase 0
+    {1, 1, 0, 0},  // phase 1
+    {0, 1, 0, 0},  // phase 2
+    {0, 1, 1, 0},  // phase 3
+    {0, 0, 1, 0},  // phase 4
+    {0, 0, 1, 1},  // phase 5
+    {0, 0, 0, 1},  // phase 6
+    {1, 0, 0, 1},  // phase 7
+};
+
+int n_phase = 0; // current phase index 0-7
+unsigned long n_us_step_delay = 2000; // microseconds between half-steps
+
+void f_set_phase(int n_p) {
+    digitalWrite(N_PIN_IN1, A_N_HALFSTEP[n_p][0]);
+    digitalWrite(N_PIN_IN2, A_N_HALFSTEP[n_p][1]);
+    digitalWrite(N_PIN_IN3, A_N_HALFSTEP[n_p][2]);
+    digitalWrite(N_PIN_IN4, A_N_HALFSTEP[n_p][3]);
+}
+
+void f_stepper_off() {
+    // de-energize all coils to save power and reduce heat
+    digitalWrite(N_PIN_IN1, LOW);
+    digitalWrite(N_PIN_IN2, LOW);
+    digitalWrite(N_PIN_IN3, LOW);
+    digitalWrite(N_PIN_IN4, LOW);
+}
+
+void f_set_rpm(float rpm) {
+    // n_us_step_delay = microseconds per half-step
+    // one revolution = N_HALFSTEP_PER_REV half-steps
+    // at X RPM: X revolutions per 60 seconds
+    // steps per second = X * N_HALFSTEP_PER_REV / 60
+    // delay per step = 60_000_000 / (X * N_HALFSTEP_PER_REV)
+    if (rpm < 0.1) rpm = 0.1;
+    n_us_step_delay = (unsigned long)(60000000.0 / (rpm * N_HALFSTEP_PER_REV));
+}
+
+void f_step(int n_count) {
+    // positive = clockwise, negative = counter-clockwise
+    int n_dir = (n_count > 0) ? 1 : -1;
+    int n_abs = abs(n_count);
+    for (int i = 0; i < n_abs; i++) {
+        n_phase = (n_phase + n_dir + 8) % 8;
+        f_set_phase(n_phase);
+        delayMicroseconds(n_us_step_delay);
+    }
+    f_stepper_off();
+}
+
+int f_n_halfstep__from_deg(int n_deg) {
+    return (int)((long)n_deg * N_HALFSTEP_PER_REV / 360);
+}
 
 WebSocketsClient o_ws;
 WebServer o_http(80);
@@ -303,10 +360,6 @@ void f_save_config() {
 
 // ── Helpers ──
 
-int f_n_step__from_deg(int n_deg) {
-    return (int)((long)n_deg * N_STEP_PER_REV / 360);
-}
-
 void f_send_status() {
     if (!b_ws_connected) return;
     JsonDocument o_doc;
@@ -325,21 +378,23 @@ void f_send_status() {
 }
 
 void f_run_procedure() {
-    o_stepper.setSpeed(n_rpm);
-    Serial.println("[stepper] forward " + String(n_deg_forward) + " deg @ " + String(n_rpm, 1) + " RPM");
-    o_stepper.step(f_n_step__from_deg(n_deg_forward));
+    f_set_rpm(n_rpm);
+    int n_hs_fwd = f_n_halfstep__from_deg(n_deg_forward);
+    int n_hs_bwd = f_n_halfstep__from_deg(n_deg_backward);
+    Serial.println("[stepper] forward " + String(n_deg_forward) + " deg (" + String(n_hs_fwd) + " half-steps) @ " + String(n_rpm, 1) + " RPM");
+    f_step(n_hs_fwd);
     delay(100);
-    Serial.println("[stepper] backward " + String(n_deg_backward) + " deg");
-    o_stepper.step(-f_n_step__from_deg(n_deg_backward));
+    Serial.println("[stepper] backward " + String(n_deg_backward) + " deg (" + String(n_hs_bwd) + " half-steps)");
+    f_step(-n_hs_bwd);
     delay(100);
 }
 
 void f_final_turn() {
-    o_stepper.setSpeed(n_rpm);
-    int n_step = f_n_step__from_deg(n_deg_final);
-    if (!b_dir_final_forward) n_step = -n_step;
+    f_set_rpm(n_rpm);
+    int n_hs = f_n_halfstep__from_deg(n_deg_final);
+    if (!b_dir_final_forward) n_hs = -n_hs;
     Serial.println("[stepper] final turn " + String(n_deg_final) + " deg " + (b_dir_final_forward ? "forward" : "backward"));
-    o_stepper.step(n_step);
+    f_step(n_hs);
 }
 
 // ── ESP32 config webpage ──
@@ -445,7 +500,7 @@ void f_handle_save() {
     if (o_http.hasArg("dir_final")) b_dir_final_forward = (o_http.arg("dir_final") == "1");
     if (o_http.hasArg("rpm")) {
         n_rpm = constrain(o_http.arg("rpm").toFloat(), 0.1, 15.0);
-        o_stepper.setSpeed(n_rpm);
+        f_set_rpm(n_rpm);
     }
 
     f_save_config();
@@ -557,7 +612,7 @@ void f_on_ws_event(WStype_t s_type, uint8_t* a_n_payload, size_t n_len) {
                 }
                 if (o_doc.containsKey("n_rpm")) {
                     n_rpm = o_doc["n_rpm"];
-                    o_stepper.setSpeed(n_rpm);
+                    f_set_rpm(n_rpm);
                 }
                 if (b_running) {
                     n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
@@ -582,10 +637,16 @@ void setup() {
     Serial.println();
     Serial.println("[setup] tee_dunker stepper control");
 
+    // init stepper pins
+    pinMode(N_PIN_IN1, OUTPUT);
+    pinMode(N_PIN_IN2, OUTPUT);
+    pinMode(N_PIN_IN3, OUTPUT);
+    pinMode(N_PIN_IN4, OUTPUT);
+    f_stepper_off();
+
     // load config from NVS (survives power cycles)
     f_load_config();
-
-    o_stepper.setSpeed(n_rpm);
+    f_set_rpm(n_rpm);
 
     // connect to WiFi
     Serial.print("[wifi] connecting to ");
