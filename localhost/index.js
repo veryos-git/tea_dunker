@@ -91,7 +91,7 @@ let f_register_handler = function(f_handler) {
     };
 };
 
-let n_ms__wsmsg_timeout = 10000;
+let n_ms__wsmsg_timeout = 300000;
 
 let f_send_wsmsg_with_response = async function(o_wsmsg){
     return new Promise(function(resolve, reject) {
