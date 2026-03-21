@@ -388,33 +388,93 @@ main {
 
 /* ── ESP32 component ── */
 .esp32_page {
-    padding: 1rem 1.5rem;
-    max-width: 900px;
-    margin: 0 auto;
+    padding: 0.5rem;
+    height: calc(100vh - 3rem); /* viewport minus nav */
+    overflow: hidden;
 }
 
 .esp32_page h2 {
-    margin-bottom: 1rem;
+    font-size: 0.85rem;
     color: var(--c-accent);
+    margin-bottom: 0.4rem;
 }
 
-.esp32_config {
+.esp32_columns {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr;
+    gap: 0.5rem;
+    height: 100%;
+}
+
+.esp32_col {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    min-height: 0;
+}
+
+.esp32_col__config {
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.esp32_col__serial {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.esp32_col__serial .serial_monitor {
+    flex: 1;
+    min-height: 0;
+}
+
+.esp32_col__right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+}
+
+.esp32_cli_log_wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.esp32_cli_log_wrap .serial_monitor {
+    flex: 1;
+    min-height: 0;
+}
+
+.esp32_col_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.esp32_col_header h2 {
+    margin-bottom: 0;
+}
+
+.esp32_col_header .esp32_button_row {
+    margin-top: 0;
 }
 
 .esp32_section {
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    padding: 1rem;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.4rem;
 }
 
 .esp32_section h3 {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     color: var(--c-text-dim);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.35rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -422,41 +482,43 @@ main {
 .esp32_field {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
-    margin-bottom: 0.5rem;
+    gap: 0.1rem;
+    margin-bottom: 0.3rem;
     flex: 1;
-    min-width: 120px;
+    min-width: 50px;
 }
 
 .esp32_field label {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--c-text-mute);
 }
 
 .esp32_field input,
 .esp32_field select {
     width: 100%;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
 }
 
 .esp32_field_row {
     display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    gap: 0.4rem;
 }
 
 .esp32_button_row {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
 }
 
 .esp32_button_row button {
-    padding: 0.5rem 1.2rem;
+    padding: 0.3rem 0.7rem;
     border-radius: var(--r);
     border: 1px solid var(--c-border);
     background: var(--c-surface);
     color: var(--c-text);
     font: inherit;
+    font-size: 0.8rem;
 }
 
 .esp32_button_row button:disabled {
@@ -472,10 +534,10 @@ main {
 }
 
 .esp32_result {
-    margin-top: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    margin-top: 0.3rem;
+    padding: 0.3rem 0.5rem;
     border-radius: var(--r);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .esp32_result.success {
@@ -488,28 +550,23 @@ main {
     border: 1px solid var(--c-danger);
 }
 
-.esp32_flash {
-    margin-top: 0.75rem;
-}
-
 /* serial monitor */
 .serial_monitor {
     background: #0d0d0d;
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    padding: 0.5rem;
+    padding: 0.4rem;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #b0e0a0;
-    height: 300px;
     overflow-y: auto;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
 }
 
 .serial_line {
     white-space: pre-wrap;
     word-break: break-all;
-    line-height: 1.3;
+    line-height: 1.25;
 }
 
 .serial_line.error {
@@ -526,22 +583,23 @@ main {
 
 .cli_log {
     color: var(--c-text-dim);
-    height: 200px;
 }
 
 /* ESP32 status */
 .esp32_status {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
 }
 
 .esp32_dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     display: inline-block;
+    flex-shrink: 0;
 }
 
 .esp32_dot.connected {
@@ -555,7 +613,7 @@ main {
 }
 
 .esp32_status_detail {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--c-text-dim);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
 }
