@@ -525,7 +525,7 @@ let f_start_serial_monitor = async function(s_path_port, a_o_socket){
 
     try {
         let o_cmd = new Deno.Command(s_bin__arduino_cli, {
-            args: ['monitor', '-p', s_path_port, '--raw'],
+            args: ['monitor', '-p', s_path_port, '--config', 'baudrate=115200', '--raw'],
             stdout: 'piped',
             stderr: 'piped',
         });
