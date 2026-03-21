@@ -13,6 +13,7 @@ import {
     o_wsmsg__esp32_serial_monitor,
     o_wsmsg__esp32_command,
     o_wsmsg__esp32_detect_port,
+    o_wsmsg__esp32_preview_code,
     o_wsmsg__logmsg,
     s_name_prop_id,
 } from './constructors.js';
@@ -387,31 +388,59 @@ let o_component__esp32 = {
                                     },
                                 ]
                             },
-                            // CLI log
+                            // CLI log / Code preview (tabbed)
                             {
                                 class: "esp32_cli_log_wrap",
                                 a_o: [
                                     {
                                         class: "esp32_col_header",
                                         a_o: [
-                                            { s_tag: "h2", innerText: "CLI Output" },
+                                            {
+                                                class: "esp32_tab_row",
+                                                a_o: [
+                                                    {
+                                                        s_tag: "button",
+                                                        class: "interactable esp32_tab",
+                                                        ':class': "{ active: s_tab__right === 'cli' }",
+                                                        '@click': "s_tab__right = 'cli'",
+                                                        innerText: "CLI Output",
+                                                    },
+                                                    {
+                                                        s_tag: "button",
+                                                        class: "interactable esp32_tab",
+                                                        ':class': "{ active: s_tab__right === 'code' }",
+                                                        '@click': "f_preview_code()",
+                                                        innerText: "ESP32 Code",
+                                                    },
+                                                ]
+                                            },
                                             {
                                                 class: "esp32_button_row",
                                                 a_o: [
                                                     {
                                                         s_tag: "button",
                                                         class: "interactable",
+                                                        'v-if': "s_tab__right === 'cli'",
                                                         '@click': "o_state.a_o_logmsg__cli = []",
                                                         innerText: "Clear",
+                                                    },
+                                                    {
+                                                        s_tag: "button",
+                                                        class: "interactable",
+                                                        'v-if': "s_tab__right === 'code'",
+                                                        '@click': "f_preview_code()",
+                                                        innerText: "Refresh",
                                                     },
                                                 ]
                                             },
                                         ]
                                     },
+                                    // CLI log tab
                                     {
                                         s_tag: "div",
                                         class: "serial_monitor cli_log",
                                         ref: "cli_log",
+                                        'v-show': "s_tab__right === 'cli'",
                                         a_o: [
                                             {
                                                 s_tag: "div",
@@ -419,6 +448,18 @@ let o_component__esp32 = {
                                                 ':key': "n_idx",
                                                 ':class': "'serial_line ' + o_log.s_type",
                                                 innerText: "{{ o_log.s_message }}",
+                                            },
+                                        ]
+                                    },
+                                    // Code preview tab
+                                    {
+                                        s_tag: "div",
+                                        class: "serial_monitor code_preview",
+                                        'v-show': "s_tab__right === 'code'",
+                                        a_o: [
+                                            {
+                                                s_tag: "pre",
+                                                innerText: "{{ s_code_preview || 'Click Refresh to generate code preview...' }}",
                                             },
                                         ]
                                     },
@@ -440,6 +481,8 @@ let o_component__esp32 = {
             b_flash_success: false,
             s_flash_result: '',
             a_s_port__detected: [],
+            s_tab__right: 'cli',
+            s_code_preview: '',
         };
     },
 
@@ -545,6 +588,20 @@ let o_component__esp32 = {
                 );
             } catch(o_err) {
                 console.error('esp32 command failed:', o_err.message);
+            }
+        },
+
+        f_preview_code: async function() {
+            this.s_tab__right = 'code';
+            try {
+                let o_resp = await f_send_wsmsg_with_response(
+                    f_o_wsmsg(o_wsmsg__esp32_preview_code.s_name, {})
+                );
+                if(o_resp.v_result && o_resp.v_result.s_ino){
+                    this.s_code_preview = o_resp.v_result.s_ino;
+                }
+            } catch(o_err) {
+                this.s_code_preview = 'Error generating code: ' + o_err.message;
             }
         },
 

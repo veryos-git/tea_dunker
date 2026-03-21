@@ -617,3 +617,40 @@ main {
     color: var(--c-text-dim);
     margin-bottom: 0.3rem;
 }
+
+/* tabs */
+.esp32_tab_row {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.esp32_tab {
+    padding: 0.2rem 0.6rem !important;
+    border-radius: var(--r) !important;
+    border: 1px solid var(--c-border) !important;
+    background: transparent !important;
+    color: var(--c-text-mute) !important;
+    font-size: 0.75rem !important;
+    font-weight: 400 !important;
+    margin-top: 0 !important;
+}
+
+.esp32_tab.active {
+    background: var(--c-accent-dim) !important;
+    color: var(--c-accent) !important;
+    border-color: var(--c-accent) !important;
+    font-weight: 600 !important;
+}
+
+/* code preview */
+.code_preview {
+    color: #c5c8c6;
+}
+
+.code_preview pre {
+    margin: 0;
+    white-space: pre;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}

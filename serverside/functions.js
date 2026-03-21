@@ -5,9 +5,9 @@
 
 import { s_ds } from './runtimedata.js';
 import { s_db_create, s_db_read, s_db_update, s_db_delete } from '../localhost/runtimedata.js';
-import { a_o_wsmsg, f_o_model_instance, f_s_name_table__from_o_model, o_model__o_fsnode, o_wsmsg__deno_copy_file, o_wsmsg__deno_mkdir, o_wsmsg__deno_stat, o_wsmsg__f_a_o_fsnode, o_wsmsg__f_delete_table_data, o_wsmsg__f_v_crud__indb, o_wsmsg__logmsg, o_wsmsg__set_state_data, o_wsmsg__syncdata, o_wsmsg__esp32_compile_flash, o_wsmsg__esp32_serial_data, o_wsmsg__esp32_command, o_wsmsg__esp32_detect_port, o_wsmsg__esp32_serial_monitor } from '../localhost/constructors.js';
+import { a_o_wsmsg, f_o_model_instance, f_s_name_table__from_o_model, o_model__o_fsnode, o_wsmsg__deno_copy_file, o_wsmsg__deno_mkdir, o_wsmsg__deno_stat, o_wsmsg__f_a_o_fsnode, o_wsmsg__f_delete_table_data, o_wsmsg__f_v_crud__indb, o_wsmsg__logmsg, o_wsmsg__set_state_data, o_wsmsg__syncdata, o_wsmsg__esp32_compile_flash, o_wsmsg__esp32_serial_data, o_wsmsg__esp32_command, o_wsmsg__esp32_detect_port, o_wsmsg__esp32_serial_monitor, o_wsmsg__esp32_preview_code } from '../localhost/constructors.js';
 import { f_v_crud__indb, f_db_delete_table_data } from './database_functions.js';
-import { f_o_result__compile_flash, f_a_s_port__serial, f_start_serial_monitor, f_stop_serial_monitor, f_send_esp32_command } from './esp32_functions.js';
+import { f_o_result__compile_flash, f_a_s_port__serial, f_start_serial_monitor, f_stop_serial_monitor, f_send_esp32_command, f_s_ino__from_o_config } from './esp32_functions.js';
 
 let f_a_o_fsnode = async function(
     s_path,
@@ -158,6 +158,12 @@ o_wsmsg__esp32_serial_monitor.f_v_server_implementation = async function(o_wsmsg
     }
     let o_config = f_o_config__from_o_state(o_state);
     return await f_start_serial_monitor(o_config.s_path_port__esp32, a_o_socket__ref);
+};
+
+o_wsmsg__esp32_preview_code.f_v_server_implementation = function(o_wsmsg, o_wsmsg__existing, o_state, o_socket__sender){
+    let o_config = f_o_config__from_o_state(o_state);
+    let s_ino = f_s_ino__from_o_config(o_config);
+    return { s_ino };
 };
 
 o_wsmsg__esp32_command.f_v_server_implementation = function(o_wsmsg, o_wsmsg__existing, o_state, o_socket__sender){

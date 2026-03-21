@@ -381,15 +381,29 @@ String f_s_html_page() {
     s += "</select></div></div>";
     s += "</div>";
 
-    // Status
-    s += "<div class='section'><h2>Status</h2>";
+    // Status + control
+    s += "<div class='section'><h2>Status & Control</h2>";
     s += "<div>IP: " + WiFi.localIP().toString() + "</div>";
     s += "<div>SSID: " + WiFi.SSID() + "</div>";
-    s += "<div>Running: " + String(b_running ? "Yes" : "No") + "</div>";
+    s += "<div>Running: <strong>" + String(b_running ? "Yes" : "No") + "</strong></div>";
+    if (b_running) {
+        unsigned long n_ms_el = millis() - n_ms_start;
+        unsigned long n_sec_remaining = (n_ms_duration > n_ms_el) ? (n_ms_duration - n_ms_el) / 1000 : 0;
+        s += "<div>Remaining: " + String(n_sec_remaining) + "s</div>";
+    }
     s += "</div>";
 
     s += "<button type='submit'>Save & Apply</button>";
-    s += "</form></body></html>";
+    s += "</form>";
+
+    // start/stop buttons (separate forms, not inside the config form)
+    s += "<div class='section'><h2>Procedure</h2>";
+    s += "<div class='row'>";
+    s += "<div><form method='POST' action='/start'><button style='width:100%;background:rgba(104,211,145,0.2);color:#68d391;border-color:#68d391;'" + String(b_running ? " disabled" : "") + ">Start</button></form></div>";
+    s += "<div><form method='POST' action='/stop'><button style='width:100%;background:rgba(252,129,129,0.2);color:#fc8181;border-color:#fc8181;'" + String(!b_running ? " disabled" : "") + ">Stop</button></form></div>";
+    s += "</div></div>";
+
+    s += "</body></html>";
     return s;
 }
 
@@ -454,6 +468,28 @@ void f_handle_save() {
     }
 
     f_send_status();
+}
+
+void f_handle_start() {
+    if (!b_running) {
+        Serial.println("[http] start procedure");
+        b_running = true;
+        n_ms_start = millis();
+        n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
+        f_send_status();
+    }
+    o_http.sendHeader("Location", "/");
+    o_http.send(303);
+}
+
+void f_handle_stop() {
+    if (b_running) {
+        Serial.println("[http] stop procedure");
+        b_running = false;
+        f_send_status();
+    }
+    o_http.sendHeader("Location", "/");
+    o_http.send(303);
 }
 
 // ── WebSocket event handler ──
@@ -563,6 +599,8 @@ void setup() {
     // start config web server on port 80
     o_http.on("/", f_handle_root);
     o_http.on("/save", HTTP_POST, f_handle_save);
+    o_http.on("/start", HTTP_POST, f_handle_start);
+    o_http.on("/stop", HTTP_POST, f_handle_stop);
     o_http.begin();
     Serial.println("[http] config server started on port 80");
     if (WiFi.status() == WL_CONNECTED) {
@@ -574,6 +612,12 @@ void setup() {
     o_ws.begin(s_server_ip.c_str(), n_server_port, "/");
     o_ws.onEvent(f_on_ws_event);
     o_ws.setReconnectInterval(3000);
+
+    // auto-start procedure on power-up
+    Serial.println("[setup] auto-starting procedure");
+    b_running = true;
+    n_ms_start = millis();
+    n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
 
     Serial.println("[setup] ready");
 }

@@ -97,6 +97,7 @@ let o_wsmsg__esp32_serial_data = f_o_wsmsg_def('esp32_serial_data', false);
 let o_wsmsg__esp32_command = f_o_wsmsg_def('esp32_command', true);
 let o_wsmsg__esp32_detect_port = f_o_wsmsg_def('esp32_detect_port', true);
 let o_wsmsg__esp32_serial_monitor = f_o_wsmsg_def('esp32_serial_monitor', true);
+let o_wsmsg__esp32_preview_code = f_o_wsmsg_def('esp32_preview_code', true);
 let o_wsmsg__syncdata = f_o_wsmsg_def('syncdata', true);
 
 // client implementations
@@ -153,6 +154,7 @@ let a_o_wsmsg = [
     o_wsmsg__esp32_command,
     o_wsmsg__esp32_detect_port,
     o_wsmsg__esp32_serial_monitor,
+    o_wsmsg__esp32_preview_code,
 ]
 
 export {
@@ -188,6 +190,7 @@ export {
     o_wsmsg__esp32_command,
     o_wsmsg__esp32_detect_port,
     o_wsmsg__esp32_serial_monitor,
+    o_wsmsg__esp32_preview_code,
     f_o_wsmsg,
     f_o_wsmsg_def,
     s_o_logmsg_s_type__log,
