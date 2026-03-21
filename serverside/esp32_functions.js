@@ -251,6 +251,7 @@ int n_deg_backward;
 int n_min_duration;
 int n_deg_final;
 bool b_dir_final_forward;
+float n_rpm;
 
 // 28BYJ-48: 2048 steps per revolution (half-step mode with ULN2003)
 const int N_STEP_PER_REV = 2048;
@@ -279,6 +280,7 @@ void f_load_config() {
     n_min_duration    = o_prefs.getInt("min_dur", ${o_config.n_min_duration});
     n_deg_final       = o_prefs.getInt("deg_final", ${o_config.n_deg_final});
     b_dir_final_forward = o_prefs.getBool("dir_final", ${s_dir_final_bool});
+    n_rpm               = o_prefs.getFloat("rpm", ${o_config.n_rpm});
     o_prefs.end();
     Serial.println("[nvs] config loaded");
 }
@@ -294,6 +296,7 @@ void f_save_config() {
     o_prefs.putInt("min_dur", n_min_duration);
     o_prefs.putInt("deg_final", n_deg_final);
     o_prefs.putBool("dir_final", b_dir_final_forward);
+    o_prefs.putFloat("rpm", n_rpm);
     o_prefs.end();
     Serial.println("[nvs] config saved");
 }
@@ -315,13 +318,15 @@ void f_send_status() {
     o_doc["n_deg_forward"] = n_deg_forward;
     o_doc["n_deg_backward"] = n_deg_backward;
     o_doc["n_min_duration"] = n_min_duration;
+    o_doc["n_rpm"] = n_rpm;
     String s_json;
     serializeJson(o_doc, s_json);
     o_ws.sendTXT(s_json);
 }
 
 void f_run_procedure() {
-    Serial.println("[stepper] forward " + String(n_deg_forward) + " deg");
+    o_stepper.setSpeed(n_rpm);
+    Serial.println("[stepper] forward " + String(n_deg_forward) + " deg @ " + String(n_rpm, 1) + " RPM");
     o_stepper.step(f_n_step__from_deg(n_deg_forward));
     delay(100);
     Serial.println("[stepper] backward " + String(n_deg_backward) + " deg");
@@ -330,6 +335,7 @@ void f_run_procedure() {
 }
 
 void f_final_turn() {
+    o_stepper.setSpeed(n_rpm);
     int n_step = f_n_step__from_deg(n_deg_final);
     if (!b_dir_final_forward) n_step = -n_step;
     Serial.println("[stepper] final turn " + String(n_deg_final) + " deg " + (b_dir_final_forward ? "forward" : "backward"));
@@ -374,6 +380,7 @@ String f_s_html_page() {
     s += "<div class='row'><div><label>Forward deg</label><input name='deg_fwd' type='number' value='" + String(n_deg_forward) + "'></div>";
     s += "<div><label>Backward deg</label><input name='deg_bwd' type='number' value='" + String(n_deg_backward) + "'></div></div>";
     s += "<label>Duration (minutes)</label><input name='min_dur' type='number' value='" + String(n_min_duration) + "'>";
+    s += "<label>Speed (RPM, 0.1 - 15.0)</label><input name='rpm' type='number' step='0.1' min='0.1' max='15.0' value='" + String(n_rpm, 1) + "'>";
     s += "<div class='row'><div><label>Final turn deg</label><input name='deg_final' type='number' value='" + String(n_deg_final) + "'></div>";
     s += "<div><label>Final direction</label><select name='dir_final'>";
     s += "<option value='1'" + String(b_dir_final_forward ? " selected" : "") + ">Forward</option>";
@@ -436,6 +443,10 @@ void f_handle_save() {
     if (o_http.hasArg("min_dur"))   n_min_duration = o_http.arg("min_dur").toInt();
     if (o_http.hasArg("deg_final")) n_deg_final    = o_http.arg("deg_final").toInt();
     if (o_http.hasArg("dir_final")) b_dir_final_forward = (o_http.arg("dir_final") == "1");
+    if (o_http.hasArg("rpm")) {
+        n_rpm = constrain(o_http.arg("rpm").toFloat(), 0.1, 15.0);
+        o_stepper.setSpeed(n_rpm);
+    }
 
     f_save_config();
 
@@ -544,6 +555,10 @@ void f_on_ws_event(WStype_t s_type, uint8_t* a_n_payload, size_t n_len) {
                 if (o_doc.containsKey("b_dir_final_forward")) {
                     b_dir_final_forward = o_doc["b_dir_final_forward"];
                 }
+                if (o_doc.containsKey("n_rpm")) {
+                    n_rpm = o_doc["n_rpm"];
+                    o_stepper.setSpeed(n_rpm);
+                }
                 if (b_running) {
                     n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
                 }
@@ -570,7 +585,7 @@ void setup() {
     // load config from NVS (survives power cycles)
     f_load_config();
 
-    o_stepper.setSpeed(10);
+    o_stepper.setSpeed(n_rpm);
 
     // connect to WiFi
     Serial.print("[wifi] connecting to ");

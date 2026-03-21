@@ -189,6 +189,13 @@ let o_component__esp32 = {
                                             {
                                                 class: "esp32_field",
                                                 a_o: [
+                                                    { s_tag: "label", innerText: "RPM (0.1-15)" },
+                                                    { s_tag: "input", type: "number", step: "0.1", min: "0.1", max: "15.0", ':value': "f_s_kv('n_rpm')", '@change': "f_update_kv('n_rpm', $event.target.value)" },
+                                                ]
+                                            },
+                                            {
+                                                class: "esp32_field",
+                                                a_o: [
                                                     { s_tag: "label", innerText: "Final deg" },
                                                     { s_tag: "input", type: "number", ':value': "f_s_kv('n_deg_final')", '@change': "f_update_kv('n_deg_final', $event.target.value)" },
                                                 ]
@@ -614,6 +621,7 @@ let o_component__esp32 = {
                     n_min_duration: parseInt(this.f_s_kv('n_min_duration')) || 5,
                     n_deg_final: parseInt(this.f_s_kv('n_deg_final')) || 180,
                     b_dir_final_forward: this.f_s_kv('s_dir_final') === 'forward',
+                    n_rpm: parseFloat(this.f_s_kv('n_rpm')) || 12.0,
                 },
             };
             try {

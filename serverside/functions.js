@@ -130,6 +130,7 @@ let f_o_config__from_o_state = function(o_state){
         n_min_duration: f_s_val('n_min_duration'),
         n_deg_final: f_s_val('n_deg_final'),
         s_dir_final: f_s_val('s_dir_final'),
+        n_rpm: f_s_val('n_rpm'),
         s_path_port__esp32: f_s_val('s_path_port__esp32'),
         s_fqbn__esp32: f_s_val('s_fqbn__esp32'),
         s_ip__server_websocket: f_s_val('s_ip__server_websocket'),

@@ -71,6 +71,10 @@ let o_o_keyvalpair__default = {
         s_key: 's_dir_final',
         s_value: 'forward',
     },
+    o_keyvalpair__n_rpm : {
+        s_key: 'n_rpm',
+        s_value: '12.0',
+    },
     // ESP32 device config
     o_keyvalpair__s_path_port__esp32 : {
         s_key: 's_path_port__esp32',
