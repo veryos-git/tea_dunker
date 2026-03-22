@@ -474,7 +474,7 @@ void f_handle_save() {
         int n_new = o_http.arg("srv_port").toInt();
         if (n_new != n_server_port) { n_server_port = n_new; b_ws_changed = true; }
     }
-    if (o_http.hasArg("n_turn"))    n_turn         = max(1, o_http.arg("n_turn").toInt());
+    if (o_http.hasArg("n_turn"))    n_turn         = max(1, (int)o_http.arg("n_turn").toInt());
     if (o_http.hasArg("min_dur"))   n_min_duration = o_http.arg("min_dur").toInt();
     if (o_http.hasArg("rpm")) {
         n_rpm = constrain(o_http.arg("rpm").toFloat(), 0.1, 15.0);
