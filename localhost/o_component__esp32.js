@@ -163,8 +163,15 @@ let o_component__esp32 = {
                                             {
                                                 class: "esp32_field",
                                                 a_o: [
-                                                    { s_tag: "label", innerText: "Turns" },
-                                                    { s_tag: "input", type: "number", min: "1", ':value': "f_s_kv('n_turn')", '@change': "f_update_kv('n_turn', $event.target.value)" },
+                                                    { s_tag: "label", innerText: "Turns loop" },
+                                                    { s_tag: "input", type: "number", step: "0.1", min: "0.1", ':value': "f_s_kv('n_turn__loop')", '@change': "f_update_kv('n_turn__loop', $event.target.value)" },
+                                                ]
+                                            },
+                                            {
+                                                class: "esp32_field",
+                                                a_o: [
+                                                    { s_tag: "label", innerText: "Turns last" },
+                                                    { s_tag: "input", type: "number", min: "1", ':value': "f_s_kv('n_turn__last')", '@change': "f_update_kv('n_turn__last', $event.target.value)" },
                                                 ]
                                             },
                                             {
@@ -582,7 +589,8 @@ let o_component__esp32 = {
             let o_config = {
                 s_command: 'reconfigure',
                 o_config: {
-                    n_turn: parseInt(this.f_s_kv('n_turn')) || 4,
+                    n_turn__loop: parseFloat(this.f_s_kv('n_turn__loop')) || 0.5,
+                    n_turn__last: parseInt(this.f_s_kv('n_turn__last')) || 2,
                     n_min_duration: parseInt(this.f_s_kv('n_min_duration')) || 5,
                     n_rpm: parseFloat(this.f_s_kv('n_rpm')) || 12.0,
                 },

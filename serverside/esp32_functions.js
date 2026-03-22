@@ -244,7 +244,8 @@ String s_wifi_ssid;
 String s_wifi_password;
 String s_server_ip;
 int n_server_port;
-int n_turn;
+float n_turn__loop;
+int n_turn__last;
 int n_min_duration;
 float n_rpm;
 
@@ -328,7 +329,8 @@ void f_load_config() {
     s_wifi_password   = o_prefs.getString("wifi_pass", S_WIFI_PASSWORD_DEFAULT);
     s_server_ip       = o_prefs.getString("srv_ip", S_SERVER_IP_DEFAULT);
     n_server_port     = o_prefs.getInt("srv_port", N_SERVER_PORT_DEFAULT);
-    n_turn            = o_prefs.getInt("n_turn", ${o_config.n_turn});
+    n_turn__loop      = o_prefs.getFloat("turn_loop", ${o_config.n_turn__loop});
+    n_turn__last      = o_prefs.getInt("turn_last", ${o_config.n_turn__last});
     n_min_duration    = o_prefs.getInt("min_dur", ${o_config.n_min_duration});
     n_rpm             = o_prefs.getFloat("rpm", ${o_config.n_rpm});
     o_prefs.end();
@@ -341,7 +343,8 @@ void f_save_config() {
     o_prefs.putString("wifi_pass", s_wifi_password);
     o_prefs.putString("srv_ip", s_server_ip);
     o_prefs.putInt("srv_port", n_server_port);
-    o_prefs.putInt("n_turn", n_turn);
+    o_prefs.putFloat("turn_loop", n_turn__loop);
+    o_prefs.putInt("turn_last", n_turn__last);
     o_prefs.putInt("min_dur", n_min_duration);
     o_prefs.putFloat("rpm", n_rpm);
     o_prefs.end();
@@ -358,7 +361,8 @@ void f_send_status() {
     o_doc["s_ssid"] = WiFi.SSID();
     o_doc["b_running"] = b_running;
     o_doc["n_ms_elapsed"] = b_running ? (millis() - n_ms_start) : 0;
-    o_doc["n_turn"] = n_turn;
+    o_doc["n_turn__loop"] = n_turn__loop;
+    o_doc["n_turn__last"] = n_turn__last;
     o_doc["n_min_duration"] = n_min_duration;
     o_doc["n_rpm"] = n_rpm;
     String s_json;
@@ -367,20 +371,20 @@ void f_send_status() {
 }
 
 void f_run_procedure() {
-    // one cycle: n_turn revolutions forward, then n_turn revolutions back
+    // one cycle: n_turn__loop revolutions forward, then n_turn__loop revolutions back
     f_set_rpm(n_rpm);
-    int n_hs = n_turn * N_HALFSTEP_PER_REV;
-    Serial.println("[stepper] " + String(n_turn) + " turns forward @ " + String(n_rpm, 1) + " RPM");
+    int n_hs = (int)(n_turn__loop * N_HALFSTEP_PER_REV);
+    Serial.println("[stepper] " + String(n_turn__loop, 1) + " turns forward @ " + String(n_rpm, 1) + " RPM");
     f_step(n_hs);
-    Serial.println("[stepper] " + String(n_turn) + " turns backward");
+    Serial.println("[stepper] " + String(n_turn__loop, 1) + " turns backward");
     f_step(-n_hs);
 }
 
 void f_final_turn() {
-    // end with n_turn revolutions back to starting direction (forward)
+    // end with n_turn__last revolutions forward (only after min duration reached)
     f_set_rpm(n_rpm);
-    int n_hs = n_turn * N_HALFSTEP_PER_REV;
-    Serial.println("[stepper] final " + String(n_turn) + " turns forward");
+    int n_hs = n_turn__last * N_HALFSTEP_PER_REV;
+    Serial.println("[stepper] final " + String(n_turn__last) + " turns forward");
     f_step(n_hs);
 }
 
@@ -419,8 +423,9 @@ String f_s_html_page() {
 
     // Stepper
     s += "<div class='section'><h2>Stepper Procedure</h2>";
-    s += "<div class='row'><div><label>Turns per cycle</label><input name='n_turn' type='number' min='1' value='" + String(n_turn) + "'></div>";
-    s += "<div><label>Duration (min)</label><input name='min_dur' type='number' value='" + String(n_min_duration) + "'></div></div>";
+    s += "<div class='row'><div><label>Turns per cycle (loop)</label><input name='turn_loop' type='number' step='0.1' min='0.1' value='" + String(n_turn__loop, 1) + "'></div>";
+    s += "<div><label>Turns last (after min)</label><input name='turn_last' type='number' min='1' value='" + String(n_turn__last) + "'></div></div>";
+    s += "<label>Duration (min)</label><input name='min_dur' type='number' value='" + String(n_min_duration) + "'>";
     s += "<label>Speed (RPM, 0.1 - 15.0)</label><input name='rpm' type='number' step='0.1' min='0.1' max='15.0' value='" + String(n_rpm, 1) + "'>";
     s += "</div>";
 
@@ -474,7 +479,8 @@ void f_handle_save() {
         int n_new = o_http.arg("srv_port").toInt();
         if (n_new != n_server_port) { n_server_port = n_new; b_ws_changed = true; }
     }
-    if (o_http.hasArg("n_turn"))    n_turn         = max(1, (int)o_http.arg("n_turn").toInt());
+    if (o_http.hasArg("turn_loop"))  n_turn__loop   = max(0.1f, o_http.arg("turn_loop").toFloat());
+    if (o_http.hasArg("turn_last"))  n_turn__last   = max(1, (int)o_http.arg("turn_last").toInt());
     if (o_http.hasArg("min_dur"))   n_min_duration = o_http.arg("min_dur").toInt();
     if (o_http.hasArg("rpm")) {
         n_rpm = constrain(o_http.arg("rpm").toFloat(), 0.1, 15.0);
@@ -581,7 +587,8 @@ void f_on_ws_event(WStype_t s_type, uint8_t* a_n_payload, size_t n_len) {
             }
             else if (s_command == "reconfigure") {
                 Serial.println("[ws] command: reconfigure");
-                n_turn = o_doc["n_turn"] | n_turn;
+                n_turn__loop = o_doc["n_turn__loop"] | n_turn__loop;
+                n_turn__last = o_doc["n_turn__last"] | n_turn__last;
                 n_min_duration = o_doc["n_min_duration"] | n_min_duration;
                 if (o_doc.containsKey("n_rpm")) {
                     n_rpm = o_doc["n_rpm"];

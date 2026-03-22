@@ -51,9 +51,13 @@ let o_o_keyvalpair__default = {
         s_value: '17',
     },
     // stepper procedure config
-    o_keyvalpair__n_turn : {
-        s_key: 'n_turn',
-        s_value: '4',
+    o_keyvalpair__n_turn__loop : {
+        s_key: 'n_turn__loop',
+        s_value: '0.5',
+    },
+    o_keyvalpair__n_turn__last : {
+        s_key: 'n_turn__last',
+        s_value: '2',
     },
     o_keyvalpair__n_min_duration : {
         s_key: 'n_min_duration',
