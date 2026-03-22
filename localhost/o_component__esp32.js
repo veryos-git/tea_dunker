@@ -163,15 +163,8 @@ let o_component__esp32 = {
                                             {
                                                 class: "esp32_field",
                                                 a_o: [
-                                                    { s_tag: "label", innerText: "Fwd deg" },
-                                                    { s_tag: "input", type: "number", ':value': "f_s_kv('n_deg_forward')", '@change': "f_update_kv('n_deg_forward', $event.target.value)" },
-                                                ]
-                                            },
-                                            {
-                                                class: "esp32_field",
-                                                a_o: [
-                                                    { s_tag: "label", innerText: "Bwd deg" },
-                                                    { s_tag: "input", type: "number", ':value': "f_s_kv('n_deg_backward')", '@change': "f_update_kv('n_deg_backward', $event.target.value)" },
+                                                    { s_tag: "label", innerText: "Turns" },
+                                                    { s_tag: "input", type: "number", min: "1", ':value': "f_s_kv('n_turn')", '@change': "f_update_kv('n_turn', $event.target.value)" },
                                                 ]
                                             },
                                             {
@@ -181,38 +174,11 @@ let o_component__esp32 = {
                                                     { s_tag: "input", type: "number", ':value': "f_s_kv('n_min_duration')", '@change': "f_update_kv('n_min_duration', $event.target.value)" },
                                                 ]
                                             },
-                                        ]
-                                    },
-                                    {
-                                        class: "esp32_field_row",
-                                        a_o: [
                                             {
                                                 class: "esp32_field",
                                                 a_o: [
-                                                    { s_tag: "label", innerText: "RPM (0.1-15)" },
+                                                    { s_tag: "label", innerText: "RPM" },
                                                     { s_tag: "input", type: "number", step: "0.1", min: "0.1", max: "15.0", ':value': "f_s_kv('n_rpm')", '@change': "f_update_kv('n_rpm', $event.target.value)" },
-                                                ]
-                                            },
-                                            {
-                                                class: "esp32_field",
-                                                a_o: [
-                                                    { s_tag: "label", innerText: "Final deg" },
-                                                    { s_tag: "input", type: "number", ':value': "f_s_kv('n_deg_final')", '@change': "f_update_kv('n_deg_final', $event.target.value)" },
-                                                ]
-                                            },
-                                            {
-                                                class: "esp32_field",
-                                                a_o: [
-                                                    { s_tag: "label", innerText: "Final dir" },
-                                                    {
-                                                        s_tag: "select",
-                                                        ':value': "f_s_kv('s_dir_final')",
-                                                        '@change': "f_update_kv('s_dir_final', $event.target.value)",
-                                                        a_o: [
-                                                            { s_tag: "option", value: "forward", innerText: "Forward" },
-                                                            { s_tag: "option", value: "backward", innerText: "Backward" },
-                                                        ]
-                                                    },
                                                 ]
                                             },
                                         ]
@@ -616,11 +582,8 @@ let o_component__esp32 = {
             let o_config = {
                 s_command: 'reconfigure',
                 o_config: {
-                    n_deg_forward: parseInt(this.f_s_kv('n_deg_forward')) || 90,
-                    n_deg_backward: parseInt(this.f_s_kv('n_deg_backward')) || 90,
+                    n_turn: parseInt(this.f_s_kv('n_turn')) || 4,
                     n_min_duration: parseInt(this.f_s_kv('n_min_duration')) || 5,
-                    n_deg_final: parseInt(this.f_s_kv('n_deg_final')) || 180,
-                    b_dir_final_forward: this.f_s_kv('s_dir_final') === 'forward',
                     n_rpm: parseFloat(this.f_s_kv('n_rpm')) || 12.0,
                 },
             };

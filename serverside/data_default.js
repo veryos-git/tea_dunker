@@ -51,25 +51,13 @@ let o_o_keyvalpair__default = {
         s_value: '17',
     },
     // stepper procedure config
-    o_keyvalpair__n_deg_forward : {
-        s_key: 'n_deg_forward',
-        s_value: '90',
-    },
-    o_keyvalpair__n_deg_backward : {
-        s_key: 'n_deg_backward',
-        s_value: '90',
+    o_keyvalpair__n_turn : {
+        s_key: 'n_turn',
+        s_value: '4',
     },
     o_keyvalpair__n_min_duration : {
         s_key: 'n_min_duration',
         s_value: '5',
-    },
-    o_keyvalpair__n_deg_final : {
-        s_key: 'n_deg_final',
-        s_value: '180',
-    },
-    o_keyvalpair__s_dir_final : {
-        s_key: 's_dir_final',
-        s_value: 'forward',
     },
     o_keyvalpair__n_rpm : {
         s_key: 'n_rpm',
