@@ -36,3 +36,6 @@ this particular programm is going to be a stepper motor that can be configured t
   - turn n degrees in the other direction 
   
 - when the n minutes are reached, a last time , turn n degrees into a certain direction.  
+
+layout: 
+make shure the whole GUI is overviewable in a full page layout. scrolling is allowed only for stuff like for example a virtual console or other logs. if there is really not enough space add toggable and moveable overlay windows for certain functions. 
