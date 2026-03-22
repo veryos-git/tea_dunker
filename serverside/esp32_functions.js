@@ -628,29 +628,16 @@ void setup() {
     f_load_config();
     f_set_rpm(n_rpm);
 
-    // connect to WiFi
+    // auto-start procedure immediately (WiFi is not required)
+    Serial.println("[setup] auto-starting procedure");
+    b_running = true;
+    n_ms_start = millis();
+    n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
+
+    // start WiFi in background (non-blocking)
     Serial.print("[wifi] connecting to ");
     Serial.println(s_wifi_ssid);
     WiFi.begin(s_wifi_ssid.c_str(), s_wifi_password.c_str());
-
-    int n_attempt = 0;
-    while (WiFi.status() != WL_CONNECTED && n_attempt < 30) {
-        delay(500);
-        Serial.print(".");
-        n_attempt++;
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.println();
-        Serial.println("[wifi] connected");
-        Serial.print("[wifi] IP: ");
-        Serial.println(WiFi.localIP());
-        Serial.print("[wifi] SSID: ");
-        Serial.println(WiFi.SSID());
-    } else {
-        Serial.println();
-        Serial.println("[wifi] failed to connect");
-    }
 
     // start config web server on port 80
     o_http.on("/", f_handle_root);
@@ -659,35 +646,28 @@ void setup() {
     o_http.on("/stop", HTTP_POST, f_handle_stop);
     o_http.begin();
     Serial.println("[http] config server started on port 80");
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.print("[http] open http://");
-        Serial.println(WiFi.localIP());
-    }
 
     // connect WebSocket to desktop app server
     o_ws.begin(s_server_ip.c_str(), n_server_port, "/");
     o_ws.onEvent(f_on_ws_event);
     o_ws.setReconnectInterval(3000);
 
-    // auto-start procedure on power-up
-    Serial.println("[setup] auto-starting procedure");
-    b_running = true;
-    n_ms_start = millis();
-    n_ms_duration = (unsigned long)n_min_duration * 60UL * 1000UL;
-
     Serial.println("[setup] ready");
 }
 
 void loop() {
-    o_ws.loop();
-    o_http.handleClient();
-
-    // WiFi reconnect
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[wifi] reconnecting...");
-        WiFi.begin(s_wifi_ssid.c_str(), s_wifi_password.c_str());
-        delay(5000);
-        return;
+    // handle WiFi/HTTP/WS only when connected (never blocks stepper)
+    if (WiFi.status() == WL_CONNECTED) {
+        o_ws.loop();
+        o_http.handleClient();
+    } else {
+        // non-blocking reconnect attempt every 10 seconds
+        static unsigned long n_ms_last_wifi_attempt = 0;
+        if (millis() - n_ms_last_wifi_attempt > 10000) {
+            n_ms_last_wifi_attempt = millis();
+            Serial.println("[wifi] reconnecting...");
+            WiFi.begin(s_wifi_ssid.c_str(), s_wifi_password.c_str());
+        }
     }
 
     if (!b_running) {
