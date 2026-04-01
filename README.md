@@ -20,8 +20,8 @@ If you want more control, there's a desktop app that lets you tweak settings, mo
 
 The housing is designed in CAD and available as a `.3mf` file:
 
-- [**MakerWorld**](https://makerworld.com/en/models/1653765)
-- [**Printables**](https://www.printables.com/model/1336203-tee-dunker)
+- [**MakerWorld**](https://makerworld.com/en/models/2601612-tea-dunker#profileId-2870693)
+- [**Printables**](https://www.printables.com/model/1658917-tea-dunker)
 
 A backup of the `.3mf` file is included in this repo (`tea_dunker_veryos.3mf`), but the latest version will always be on MakerWorld/Printables.
 
